@@ -15,7 +15,7 @@ jobs:
   check_version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: check tag version == pyproject.version
         run: |
           pip install toml-cli
@@ -31,7 +31,7 @@ jobs:
       - test
       - check_version
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Set up Python
@@ -76,7 +76,7 @@ jobs:
       contents: write # mandatory for making GitHub Releases
       id-token: write # mandatory for sigstore
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Extract changelog for version
         run: |
           VERSION="${{ github.ref_name }}"
