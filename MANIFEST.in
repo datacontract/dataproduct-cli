@@ -1,0 +1,3 @@
+include README.md LICENSE CHANGELOG.md
+recursive-include dataproduct/schemas *.json *.yaml
+include dataproduct/py.typed

@@ -1,0 +1,37 @@
+apiVersion: v1.0.0
+kind: DataProduct
+id: my-data-product-id
+name: My Data Product
+version: v1.0.0
+status: draft
+
+description:
+  purpose: Purpose of the data product.
+  usage: Intended usage of the data product.
+  limitations: Limitations of the data product.
+
+# tags: ['example']
+
+# inputPorts:
+#   - name: source-data
+#     version: 1.0.0
+#     contractId: 00000000-0000-0000-0000-000000000000
+
+outputPorts:
+  - name: my-output-port
+    description: The data this product exposes.
+    type: tables
+    version: 1.0.0
+    # contractId: 00000000-0000-0000-0000-000000000000
+
+# support:
+#   - channel: My Team Slack
+#     url: https://example.slack.com/archives/C0000000000
+#     tool: slack
+
+# team:
+#   name: My Team
+#   members:
+#     - username: jane.doe@example.com
+#       name: Jane Doe
+#       role: owner

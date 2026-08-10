@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# uv
+# (uv.lock IS committed)
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Test artifacts
+TEST-*.xml
+test-results/
+
+# Local data product scratch files
+/dataproduct.odps.yaml
+/new-dataproduct.odps.yaml

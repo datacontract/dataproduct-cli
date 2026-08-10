@@ -1,0 +1,16 @@
+apiVersion: v1.0.0
+kind: DataProduct
+id: my-published-product
+status: active
+name: Publishable Data Product
+version: v1.0.0
+
+description:
+  purpose: A data product used in publish tests.
+
+team:
+  name: my-team
+
+outputPorts:
+  - name: processed-data
+    version: 1.0.0

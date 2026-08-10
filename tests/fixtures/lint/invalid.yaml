@@ -1,0 +1,4 @@
+apiVersion: v1.0.0
+kind: DataProduct
+id: [unclosed
+status: active

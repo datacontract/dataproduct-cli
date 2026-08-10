@@ -1,0 +1,94 @@
+[project]
+name = "dataproduct-cli"
+version = "0.1.0"
+description = "The dataproduct CLI is an open source command-line tool for working with data products. It uses data product YAML files following the Open Data Product Standard (ODPS) to lint the definition against the standard and publish it to Entropy Data. The tool is written in Python. It can be used as a standalone CLI tool, in a CI/CD pipeline, or directly as a Python library."
+license = "MIT"
+readme = "README.md"
+authors = [
+  { name = "Michael Kutz", email = "michael.kutz@entropy-data.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  # Keep in sync with `requires-python` below.
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Database",
+  "Topic :: Software Development :: Quality Assurance",
+]
+keywords = [
+  "data-product",
+  "data-products",
+  "odps",
+  "open-data-product-standard",
+  "data-governance",
+  "data-mesh",
+  "data-engineering",
+]
+requires-python = ">=3.10,<3.15"
+dependencies = [
+  "typer>=0.18.0,<0.28",
+  "click>=8.1.0,<9.0.0",
+  "pydantic>=2.8.2,<2.14.0",
+  "pyyaml~=6.0.1",
+  "requests>=2.31,<2.35",
+  "jsonschema>=4.23.0,<5.0.0",
+  "rich>=13.7,<16.0",
+  "python-dotenv>=1.0.0,<2.0.0",
+  "typing-extensions>=4.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-xdist",
+  "ruff==0.16.1",
+  "pre-commit>=3.7.1,<4.7.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/entropy-data/dataproduct-cli"
+Repository = "https://github.com/entropy-data/dataproduct-cli"
+Issues = "https://github.com/entropy-data/dataproduct-cli/issues"
+
+[project.scripts]
+dataproduct = "dataproduct.cli:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["dataproduct*"]
+
+[tool.setuptools.package-data]
+dataproduct = ["schemas/*.json", "schemas/*.yaml", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+log_level = "INFO"
+log_cli_level = "INFO"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+# Pin the rule set explicitly so a ruff upgrade doesn't silently change what CI enforces.
+select = [
+  "E4",  # pycodestyle imports
+  "E7",  # pycodestyle statements
+  "E9",  # pycodestyle runtime errors
+  "F",   # pyflakes
+  "I",   # import ordering
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
