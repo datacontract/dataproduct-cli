@@ -5,6 +5,10 @@ what changed (user-facing).
 
 ## [Unreleased]
 
+## [0.0.1]
+
+- Test release to validate the PyPI publishing pipeline
+
 ## [0.1.0]
 
 - `init` command: create a valid `dataproduct.odps.yaml` from a bundled ODPS v1.0.0 template
