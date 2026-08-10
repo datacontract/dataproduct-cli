@@ -71,6 +71,34 @@ This matches datacontract-cli's `publish` exactly (same verb, `x-api-key`,
 `200`), so `integration/entropy_data.py` can be a near-copy with the path
 changed from `datacontracts` to `dataproducts`.
 
+### Field-tested notes (live publish, 2026-08-10)
+
+Observed while publishing a throwaway product to a demo instance
+(`demo.entropy-data.com`) and fetching it back — both confirmed working:
+
+- **Host has no `api.` subdomain on non-prod instances.** Production is
+  `api.entropy-data.com`, but the demo/self-hosted instance serves the API at
+  the **UI host** itself: `https://demo.entropy-data.com/api/...` (there is no
+  `api.demo.entropy-data.com` — it doesn't resolve). ⇒ Set `ENTROPY_DATA_HOST`
+  to the instance's base URL (e.g. `https://demo.entropy-data.com`); the CLI
+  appends `/api/dataproducts/{id}`.
+- **No `location-html` header on the `PUT` response.** The success path printed
+  `✅ Published data product successfully` but **no `🚀 Open <url>` line**,
+  because this endpoint didn't return the `location-html` header the code looks
+  for. datacontract-cli relies on that same header for data contracts; the
+  data-products endpoint may not set it (or may use a different name). Not a
+  bug in our code — worth confirming against the API later and adjusting the
+  header name if there's a deep-link header we should surface.
+- **Team is referenced by its `id`, not display name.** A product owned by the
+  "Data & AI" team (id `data--ai`) published successfully with
+  `team: {name: data--ai}` — i.e. the value under `team.name` is the team's
+  **id/slug**, not the human label ("Data & AI").
+- **API-key management is UI-only for org-scoped keys.** The API exposes only
+  `POST /api/api-keys` (create a *team*-scoped key) and
+  `DELETE /api/api-keys/{id}` (delete a *team*-scoped key); there's no list
+  endpoint and org-scoped keys can't be revoked via the API. Irrelevant to
+  `publish` itself, but noted so we don't reach for a nonexistent endpoint.
+
 ## Config / auth
 
 Reuse `dataproduct/integration/entropy_data.py`, structurally identical to
