@@ -54,9 +54,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/entropy-data/dataproduct-cli"
-Repository = "https://github.com/entropy-data/dataproduct-cli"
-Issues = "https://github.com/entropy-data/dataproduct-cli/issues"
+Homepage = "https://github.com/datacontract/dataproduct-cli"
+Repository = "https://github.com/datacontract/dataproduct-cli"
+Issues = "https://github.com/datacontract/dataproduct-cli/issues"
 
 [project.scripts]
 dataproduct = "dataproduct.cli:main"
