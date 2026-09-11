@@ -3,7 +3,7 @@ import logging
 
 import requests
 
-DEFAULT_DATA_PRODUCT_INIT_TEMPLATE = "odps-1.0.0.init.yaml"
+DEFAULT_DATA_PRODUCT_INIT_TEMPLATE = "odps-1.1.0.init.yaml"
 
 
 def get_init_template(location: str = None) -> str:

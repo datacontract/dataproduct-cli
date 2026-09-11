@@ -67,9 +67,13 @@ before changing a command.
 
 ## Refreshing the bundled ODPS schema
 
-The ODPS JSON Schema is vendored at
-`dataproduct/schemas/odps-1.0.0.schema.json` from
-`https://raw.githubusercontent.com/bitol-io/open-data-product-standard/main/schema/odps-json-schema-v1.0.0.json`.
+The ODPS JSON Schemas are vendored at `dataproduct/schemas/odps-<version>.schema.json`;
+`dataproduct/schemas/download` refreshes them (parallel to datacontract-cli's
+`datacontract/schemas/download`). `lint` picks the bundled schema by the
+document's `apiVersion` (`ODPS_SCHEMA_VERSIONS` in `dataproduct/lint/schema.py`).
+A new ODPS release means: add it to `download` and run it, register it in
+`ODPS_SCHEMA_VERSIONS`, bump `DEFAULT_ODPS_SCHEMA_VERSION`, and move the init
+template to the new version.
 
 ## Release
 

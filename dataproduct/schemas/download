@@ -1,0 +1,9 @@
+#!/bin/bash
+# Refresh the vendored ODPS JSON Schemas (newest from its release tag, older ones from main,
+# as datacontract-cli does). After adding a version here, register it in ODPS_SCHEMA_VERSIONS
+# (dataproduct/lint/schema.py).
+set -e
+cd "$(dirname "$0")"
+
+curl -o odps-1.0.0.schema.json https://raw.githubusercontent.com/bitol-io/open-data-product-standard/refs/heads/main/schema/odps-json-schema-v1.0.0.json
+curl -o odps-1.1.0.schema.json https://raw.githubusercontent.com/bitol-io/open-data-product-standard/refs/tags/v1.1.0/schema/odps-json-schema-v1.1.0.json

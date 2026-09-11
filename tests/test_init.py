@@ -12,6 +12,7 @@ def test_init_default_creates_valid_file(tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     created = tmp_path / "dataproduct.odps.yaml"
     assert created.exists()
+    assert "apiVersion: v1.1.0" in created.read_text()
 
     # The generated file must pass lint with zero errors.
     run = DataProduct(data_product_file=str(created)).lint()

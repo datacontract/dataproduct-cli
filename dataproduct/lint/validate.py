@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import yaml
 from jsonschema.validators import validator_for
@@ -32,11 +32,15 @@ def parse_yaml(content: str) -> Dict[str, Any]:
     return data
 
 
-def validate_against_schema(data: Dict[str, Any], schema: Dict[str, Any], all_errors: bool = False) -> List[Check]:
+def validate_against_schema(
+    data: Dict[str, Any], schema: Dict[str, Any], all_errors: bool = False, schema_version: Optional[str] = None
+) -> List[Check]:
     """Validate ``data`` against the ODPS JSON Schema.
 
     Returns a list of ``error`` checks — empty when the document is valid. With
-    ``all_errors=False`` (default) only the first violation is reported.
+    ``all_errors=False`` (default) only the first violation is reported. Check
+    names state the bundled ``schema_version`` that ran; ``None`` means a custom
+    schema was supplied and no version is named.
     """
     validator_cls = validator_for(schema)
     validator_cls.check_schema(schema)
@@ -46,16 +50,21 @@ def validate_against_schema(data: Dict[str, Any], schema: Dict[str, Any], all_er
     if not all_errors:
         errors = errors[:1]
 
+    name = (
+        "Check that data product YAML is valid"
+        if schema_version is None
+        else f"Check that data product is valid against ODPS v{schema_version}"
+    )
     checks: List[Check] = []
     for error in errors:
-        path = "/".join(str(p) for p in error.absolute_path) or "(root)"
+        path = "/".join(str(p) for p in error.absolute_path)
         checks.append(
             Check(
                 type="lint",
                 result=ResultEnum.error,
-                name=f"Schema validation failed at '{path}'",
-                reason=error.message,
-                field=path,
+                name=name,
+                reason=f"{path}: {error.message}" if path else error.message,
+                field=path or "(root)",
             )
         )
     return checks

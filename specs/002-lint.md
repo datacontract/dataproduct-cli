@@ -34,14 +34,20 @@ Run as an ordered set of checks, each producing a result entry:
 1. **File is readable** — LOCATION exists / URL fetches; else `error`.
 2. **Valid YAML** — parses to a mapping; else `error`.
 3. **Schema validation (authoritative)** — validate the parsed document against
-   the bundled ODPS JSON Schema (`dataproduct/schemas/odps-1.0.0.schema.json`),
-   or the `--json-schema` override. Each violation is an `error` (path +
+   the bundled ODPS JSON Schema matching the document's `apiVersion`
+   (`v1.1.0` → `odps-1.1.0.schema.json`; `v1.0.0` and `v0.9.0` →
+   `odps-1.0.0.schema.json`; unknown/missing → latest, which then reports the
+   bad `apiVersion`), or the `--json-schema` override. Each violation is an `error` (path +
    message). With `--all-errors`, collect every violation; otherwise stop at
    the first.
-   - This enforces the strictly-required fields (`apiVersion`, `kind`, `id`,
-     `status`), the `kind: DataProduct` / `apiVersion` enums (both `v0.9.0` and
-     `v1.0.0` are accepted, silently — no version special-casing), and the
-     required subfields of ports/support/etc.
+   - This enforces the strictly-required fields (`apiVersion`, `kind`, `id`;
+     plus `status` for v1.0.0 documents), the `kind: DataProduct` /
+     `apiVersion` enums (`v0.9.0`, `v1.0.0`, `v1.1.0` are all accepted, silently),
+     and the required subfields of ports/support/etc.
+   - Picking the schema by `apiVersion` is deliberate: v1.1.0 both relaxed
+     required fields (`status`, port `version`/`contractId`) and added new
+     ones (`type`, `context`, `synonyms`, `deprecated`, `vendor`), so a v1.0.0
+     document must not silently pass with v1.1.0 fields or without `status`.
 
 **0.1 is schema-only** — parity with datacontract-cli's `lint`, which validates
 against the JSON Schema and nothing more. Best-practice warnings (≥1 outputPort,
@@ -71,12 +77,17 @@ run = DataProduct(data_product_file="dataproduct.odps.yaml").lint()
 assert run.result == "passed"
 ```
 
-## Bundled schema
+## Bundled schemas
 
-- `dataproduct/schemas/odps-1.0.0.schema.json`, vendored from
-  `https://raw.githubusercontent.com/bitol-io/open-data-product-standard/main/schema/odps-json-schema-v1.0.0.json`.
-- A small maintenance script (`update_schema.py`, parallel to datacontract-cli's
-  update scripts) can refresh the vendored copy.
+- `dataproduct/schemas/odps-1.1.0.schema.json` (default) and
+  `dataproduct/schemas/odps-1.0.0.schema.json`, vendored from
+  `https://raw.githubusercontent.com/bitol-io/open-data-product-standard/main/schema/odps-json-schema-v<version>.json`.
+- Selection lives in `ODPS_SCHEMA_VERSIONS` (`dataproduct/lint/schema.py`);
+  `dataproduct/schemas/download` refreshes the vendored copies.
+- Check names state the schema that ran (`Data product is valid against ODPS
+  v1.1.0` / `Check that data product is valid against ODPS v1.0.0`); with a
+  custom `--json-schema` no version is named.
+
 
 ## Acceptance criteria
 
@@ -92,6 +103,10 @@ assert run.result == "passed"
 - [ ] `--json-schema <path>` validates against the supplied schema instead of
       the bundled one.
 - [ ] A missing file yields a clean `error` result (no traceback), exit `1`.
+- [ ] A `v1.1.0` document using `type`, `context`, `synonyms`, `deprecated`,
+      `vendor`, and ports without `version`/`contractId` returns `passed`.
+- [ ] A `v1.1.0` document without `status` returns `passed`; a `v1.0.0` one fails.
+- [ ] A `v1.0.0` document using a v1.1.0-only field (e.g. `type`) fails.
 
 ## Test cases (pytest)
 
@@ -104,6 +119,9 @@ assert run.result == "passed"
 7. `test_lint_junit_output` → well-formed XML written to file.
 8. `test_lint_custom_json_schema`.
 9. `test_lint_missing_file` → error, exit 1.
+10. `test_lint_valid_v1_1_0`, `test_lint_v1_1_0_status_is_optional`,
+    `test_lint_v1_1_0_fields_rejected_under_v1_0_0`,
+    `test_lint_names_the_schema_that_ran`, `test_schema_version_selected_by_api_version`.
 
 ## Decisions
 
@@ -111,6 +129,12 @@ assert run.result == "passed"
    datacontract-cli. Best-practice warnings backlogged ([backlog.md](backlog.md)).
 2. **Reference resolution:** ✅ **Deferred** — no inlining of
    `authoritativeDefinitions` in 0.1 ([backlog.md](backlog.md)).
-3. **`apiVersion v0.9.0`:** ✅ **Accept both silently** (schema default; no
-   special-casing). A deprecation warning is backlogged.
+3. **`apiVersion v0.9.0`:** ✅ **Accept silently** (validated with the v1.0.0
+   schema, which has no dedicated v0.9.0 rules). A deprecation warning is backlogged.
+4. **ODPS v1.1.0 (2026-09):** ✅ **Schema chosen per `apiVersion`**, mirroring
+   datacontract-cli #1606 (`lint` validates against the declared ODCS
+   `apiVersion`; older versions without their own schema share the nearest
+   one, unknown versions fall back to the newest). Needed here because v1.1.0
+   loosened required fields, so a v1.0.0 document must not pass without
+   `status` or with v1.1.0-only fields.
 ```
