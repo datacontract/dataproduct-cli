@@ -5,6 +5,8 @@ what changed (user-facing).
 
 ## [Unreleased]
 
+## [0.2.0]
+
 - Support ODPS v1.1.0: `lint` validates against the bundled v1.1.0 JSON Schema (`type`, `context`, `synonyms`, `deprecated`, `customProperties[].vendor`, element `id`s, optional port `version`/`contractId`)
 - `lint` validates against the bundled JSON Schema for the `apiVersion` the document declares (`v1.1.0` → v1.1.0 schema; `v1.0.0`/`v0.9.0` → v1.0.0 schema; unknown → newest), and check names state which schema ran
 - `init` template now uses `apiVersion: v1.1.0`
