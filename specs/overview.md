@@ -3,7 +3,7 @@
 ## Purpose
 
 `dataproduct-cli` is an open-source command-line tool for working with **data
-products** defined with the [Open Data Product Standard (ODPS) v1.0.0](https://bitol-io.github.io/open-data-product-standard/v1.0.0/).
+products** defined with the [Open Data Product Standard (ODPS) v1.1.0](https://bitol-io.github.io/open-data-product-standard/v1.1.0/).
 It is the data-product counterpart to
 [`datacontract-cli`](https://github.com/datacontract/datacontract-cli) (which
 targets the Open Data **Contract** Standard, ODCS), and deliberately mirrors its
@@ -27,31 +27,35 @@ Out of scope for now (candidates for later): `export`, `import`, `changelog`,
 The default filename is `dataproduct.odps.yaml`. The document is an ODPS
 `DataProduct`.
 
-### Top-level fields (ODPS v1.0.0)
+### Top-level fields (ODPS v1.1.0)
 
 | Field | Req. | Notes |
 |---|---|---|
-| `apiVersion` | ✅ | `v1.0.0` (schema also allows `v0.9.0`) |
+| `apiVersion` | ✅ | `v1.1.0` (schema also allows `v1.0.0`, `v0.9.0`) |
 | `kind` | ✅ | must be `DataProduct` |
 | `id` | ✅ | unique identifier, UUID recommended |
-| `status` | ✅ | e.g. `proposed`, `draft`, `active`, `deprecated`, `retired` |
+| `status` | — | e.g. `proposed`, `draft`, `active`, `deprecated`, `retired` (required in v1.0.0, optional since v1.1.0) |
 | `name` | — | human-readable name |
 | `version` | — | product version (e.g. `v1.0.0`) |
+| `type` | — | architectural type, e.g. `sourceAligned`, `aggregate`, `consumerAligned` (v1.1.0) |
+| `deprecated` | — | boolean, default `false` (v1.1.0; also on ports) |
 | `domain` | — | business domain |
 | `tenant` | — | organization identifier |
 | `description` | — | object: `purpose`, `usage`, `limitations`, … |
 | `tags` | — | list of strings |
-| `inputPorts` | — | items require `name`, `version`, `contractId` |
-| `outputPorts` | — | items require `name`, `version`; best practice ≥ 1 |
+| `synonyms` | — | list of `{synonym, locale?, source?, …}` (v1.1.0; also on output ports) |
+| `context` | — | AI/semantic context: `instructions`, `verifiedStatements`, `constraints` (v1.1.0; also on output ports) |
+| `inputPorts` | — | items require `name` (`version`, `contractId` also required in v1.0.0) |
+| `outputPorts` | — | items require `name` (`version` also required in v1.0.0); best practice ≥ 1 |
 | `managementPorts` | — | management/observability endpoints |
 | `support` | — | items require `channel`, `url` |
 | `team` | — | object with `members` |
-| `customProperties` | — | list of `{property, value}` |
+| `customProperties` | — | list of `{property, value, vendor?}` |
 | `authoritativeDefinitions` | — | list of `{type, url}` |
 | `productCreatedTs` | — | ISO 8601 UTC timestamp |
 
-> **Required-field note.** The official JSON Schema strictly requires only
-> `apiVersion`, `kind`, `id`, `status`. The prose standard additionally
+> **Required-field note.** The official v1.1.0 JSON Schema strictly requires
+> only `apiVersion`, `kind`, `id` (v1.0.0 also requires `status`). The prose standard additionally
 > recommends at least one `outputPort`. `lint` treats the JSON Schema as
 > authoritative for pass/fail. In 0.1 that's the whole story (schema-only,
 > parity with datacontract-cli); best-practice warnings like "≥1 outputPort"
@@ -60,7 +64,7 @@ The default filename is `dataproduct.odps.yaml`. The document is an ODPS
 ### Minimal valid example (from the ODPS repo)
 
 ```yaml
-apiVersion: v1.0.0
+apiVersion: v1.1.0
 kind: DataProduct
 id: 064c4630-8aad-4dc0-ba95-0f69940e6b18
 status: active
@@ -125,7 +129,7 @@ dataproduct-cli/
 │   │   └── entropy_data.py      # publish to Entropy Data
 │   ├── model/                   # Pydantic models + Run/result types + exceptions
 │   ├── output/                  # result writers (console, json, junit)
-│   └── schemas/                 # bundled odps-*.schema.json + *.init.yaml
+│   └── schemas/                 # bundled odps-<version>.schema.json (one per supported apiVersion) + *.init.yaml
 └── tests/
     ├── fixtures/
     └── test_*.py

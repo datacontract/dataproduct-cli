@@ -27,7 +27,7 @@ Example: `dataproduct init dataproduct.odps.yaml`
    `File already exists, use --overwrite to overwrite` and exit code `1`.
 2. Resolve the template contents:
    - No `--template` → use the **bundled** default template
-     (`dataproduct/schemas/odps-1.0.0.init.yaml`).
+     (`dataproduct/schemas/odps-1.1.0.init.yaml`).
    - `--template` is an `http(s)://` URL → fetch its body.
    - `--template` is a local path → read it.
 3. Write the template string to `LOCATION`.
@@ -38,8 +38,8 @@ Example: `dataproduct init dataproduct.odps.yaml`
 
 ## Bundled default template
 
-- Lives at `dataproduct/schemas/odps-1.0.0.init.yaml`.
-- Uses `apiVersion: v1.0.0`, `kind: DataProduct`.
+- Lives at `dataproduct/schemas/odps-1.1.0.init.yaml`.
+- Uses `apiVersion: v1.1.0`, `kind: DataProduct`, with a commented `type` stub.
 - Contains a **static** `id` placeholder (`my-data-product-id`) — see decision
   below.
 - Includes at least one `outputPort` so the result satisfies the best-practice
@@ -48,7 +48,7 @@ Example: `dataproduct init dataproduct.odps.yaml`
 Proposed content:
 
 ```yaml
-apiVersion: v1.0.0
+apiVersion: v1.1.0
 kind: DataProduct
 id: my-data-product-id
 name: My Data Product

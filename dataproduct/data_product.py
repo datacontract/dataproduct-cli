@@ -11,7 +11,7 @@ from typing import Optional, Union
 from dataproduct.config import Config
 from dataproduct.integration.entropy_data import publish_data_product_to_entropy_data
 from dataproduct.lint.files import read_resource
-from dataproduct.lint.schema import fetch_schema
+from dataproduct.lint.schema import fetch_schema, schema_version_for
 from dataproduct.lint.validate import parse_yaml, validate_against_schema
 from dataproduct.model.exceptions import DataProductException
 from dataproduct.model.run import Check, ResultEnum, Run
@@ -46,15 +46,16 @@ class DataProduct:
         return parse_yaml(content)
 
     def lint(self) -> Run:
-        """Validate the data product against the ODPS JSON Schema (schema-only)."""
+        """Validate the data product against the ODPS JSON Schema matching its ``apiVersion`` (schema-only)."""
         run = Run.create_run()
         run.log_info("Linting data product")
         try:
             data = self._load_dict()
             run.dataProductId = data.get("id")
             run.dataProductVersion = data.get("version")
-            schema = fetch_schema(self._schema_location)
-            checks = validate_against_schema(data, schema, self._all_errors)
+            schema_version = None if self._schema_location else schema_version_for(data.get("apiVersion"))
+            schema = fetch_schema(self._schema_location, schema_version)
+            checks = validate_against_schema(data, schema, self._all_errors, schema_version)
             if checks:
                 run.checks.extend(checks)
                 for check in checks:
@@ -64,7 +65,9 @@ class DataProduct:
                     Check(
                         type="lint",
                         result=ResultEnum.passed,
-                        name="Data product is syntactically valid",
+                        name="Data product is syntactically valid"
+                        if schema_version is None
+                        else f"Data product is valid against ODPS v{schema_version}",
                     )
                 )
         except DataProductException as e:

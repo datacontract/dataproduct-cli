@@ -30,8 +30,8 @@ Do this in both CLIs (datacontract-cli is also schema-only today).
 - Source: [002-lint.md](002-lint.md)
 
 ### 3. `apiVersion v0.9.0` deprecation warning (cross-CLI)
-0.1 accepts `v0.9.0` and `v1.0.0` silently. Improvement: warn (non-blocking)
-when `v0.9.0` is used, nudging toward `v1.0.0`. Pairs with item 2.
+`v0.9.0`, `v1.0.0`, and `v1.1.0` are accepted silently. Improvement: warn
+(non-blocking) when `v0.9.0` is used, nudging toward `v1.1.0`. Pairs with item 2.
 - Source: [002-lint.md](002-lint.md)
 
 ### 4. Pre-publish lint gate + `--skip-lint` (cross-CLI)

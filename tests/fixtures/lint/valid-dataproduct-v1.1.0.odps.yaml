@@ -1,0 +1,53 @@
+apiVersion: v1.1.0
+kind: DataProduct
+id: 064c4630-8aad-4dc0-ba95-0f69940e6b18
+status: active
+name: Orders Data Product
+version: v2.0.0
+type: consumerAligned
+deprecated: false
+
+description:
+  purpose: Curated orders for analytics
+  limitations: None
+  usage: Analytics and reporting
+
+context:
+  instructions: Use the orders output port for revenue questions.
+  verifiedStatements:
+    - id: q-revenue
+      question: What was total revenue last month?
+      answer: Sum order_total over the previous calendar month.
+  constraints:
+    - constraint: Do not expose customer email addresses.
+
+synonyms:
+  - synonym: Sales Orders
+    locale: en-US
+    source: glossary
+
+inputPorts:
+  - id: raw-orders
+    name: raw-orders
+
+outputPorts:
+  - id: orders
+    name: orders
+    description: Curated orders
+    type: tables
+    deprecated: false
+    synonyms:
+      - synonym: Bestellungen
+        locale: de-DE
+    context:
+      instructions: Prefer this port over legacy-orders.
+    sbom:
+      - type: library
+        tags: ['build']
+  - name: legacy-orders
+    deprecated: true
+
+customProperties:
+  - property: costCenter
+    value: cc-4711
+    vendor: acme

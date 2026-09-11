@@ -2,7 +2,7 @@
 
 The `dataproduct` CLI is an open-source command-line tool for working with
 **data products** defined with the
-[Open Data Product Standard (ODPS)](https://bitol-io.github.io/open-data-product-standard/v1.0.0/).
+[Open Data Product Standard (ODPS)](https://bitol-io.github.io/open-data-product-standard/v1.1.0/).
 
 It is the data-product sibling of
 [`datacontract-cli`](https://github.com/datacontract/datacontract-cli) (which
@@ -41,8 +41,10 @@ dataproduct lint --output-format junit --output TEST-dataproduct.xml
 dataproduct lint --json-schema ./odps.schema.json  # validate against a custom schema
 ```
 
-Validation is schema-only in 0.1: the data product is checked against the
-bundled ODPS v1.0.0 JSON Schema. Exit code is `0` when valid, `1` otherwise.
+Validation is schema-only: the data product is checked against the bundled
+ODPS JSON Schema matching its `apiVersion` (`v1.1.0`, `v1.0.0`, or `v0.9.0`;
+unknown versions are validated against the latest). Exit code is `0` when
+valid, `1` otherwise.
 
 ### `publish` — publish to Entropy Data
 
