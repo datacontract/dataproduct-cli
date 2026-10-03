@@ -13,7 +13,7 @@ jobs:
     secrets: inherit
 
   check_version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: check tag version == pyproject.version
@@ -26,7 +26,7 @@ jobs:
           if [[ "$TAG" != "v$PROJECT_VERSION" ]]; then exit 1; fi
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - test
       - check_version
@@ -52,7 +52,7 @@ jobs:
     name: Publish 🐍 distribution 📦 to PyPI
     needs:
       - build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: release-pypi
       url: https://pypi.org/p/dataproduct-cli
@@ -71,7 +71,7 @@ jobs:
     name: Create a GitHub Release
     needs:
       - publish-to-pypi
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # mandatory for making GitHub Releases
       id-token: write # mandatory for sigstore

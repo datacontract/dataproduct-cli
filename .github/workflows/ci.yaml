@@ -15,7 +15,7 @@ name: CI
 jobs:
   lint:
     name: "Linting & Formatting (fix with: uv run ruff check --fix && uv run ruff format)"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - "ubuntu-latest"
+          - "ubuntu-24.04"
         python-version:
           - "3.10"
           - "3.11"
@@ -56,7 +56,7 @@ jobs:
         run: uv run pytest -n0
 
   smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
