@@ -20,6 +20,7 @@ dataproduct lint [LOCATION] [OPTIONS]
 | `--output-format` | option (enum) | none | `json` or `junit`. |
 | `--all-errors` | flag | `false` | Report all JSON Schema violations instead of stopping at the first. |
 | `--resolve-references / --no-resolve-references` | flag | `true` | Resolve (and, with datacontract-cli on the PATH, lint) the data contracts linked via port `contractId`. |
+| `--local-references` | flag | `false` | Resolve linked data contracts among local `*.odcs.yaml` files even when an API key is set. |
 | `--debug` | flag | `false` | Enable debug logging. |
 
 Example: `dataproduct lint dataproduct.odps.yaml`
@@ -53,12 +54,13 @@ Run as an ordered set of checks, each producing a result entry:
 4. **Linked data contracts resolve** (since 0.3) — for every
    `inputPorts[].contractId` and `outputPorts[].contractId` (nothing else is
    followed), one check per reference:
-   - **API key set** (`ENTROPY_DATA_API_KEY` or its fallbacks): `GET
+   - **API key set** (`ENTROPY_DATA_API_KEY` or its fallbacks; empty or blank
+     counts as unset) and no `--local-references`: `GET
      {host}/api/datacontracts/{id}` with `x-api-key`, redirects not followed.
      `200` → `passed`; `404` → `warning` (not found on host); anything else
      (network, `401/403`, `5xx`) → `warning` (could not verify). No local
      fallback.
-   - **No API key**: search the current working directory and its
+   - **No API key, or `--local-references`**: search the current working directory and its
      subdirectories (skipping hidden dirs, `node_modules`, `venv`, …) for
      `*.odcs.yaml` / `*.odcs.yml`, parse each, and match `kind: DataContract`
      + `id`. Found → `passed` (reason names the path); else `warning`.
@@ -133,6 +135,8 @@ assert run.result == "passed"
 - [ ] A port `contractId` matching a local `*.odcs.yaml` with `kind: DataContract`
       passes; one with no match warns; the run still `passes`.
 - [ ] With an API key, contracts resolve via Entropy Data only.
+- [ ] An empty or blank API key resolves locally.
+- [ ] `--local-references` resolves locally even with an API key.
 - [ ] `dataproduct lint` runs `datacontract lint` once per resolved contract
       when it is on the PATH; the library API doesn't.
 
@@ -151,7 +155,7 @@ assert run.result == "passed"
     `test_lint_v1_1_0_fields_rejected_under_v1_0_0`,
     `test_lint_names_the_schema_that_ran`, `test_schema_version_selected_by_api_version`.
 11. `tests/test_references.py` — local / Entropy Data resolution, warnings,
-    datacontract-cli invocation, `--no-resolve-references`.
+    datacontract-cli invocation, `--no-resolve-references`, `--local-references`.
 
 ## Decisions
 

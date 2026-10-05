@@ -83,13 +83,16 @@ def fetch_data_contract_exists(contract_id: str, config: Config | None = None) -
 
 
 def get_api_key_or_none(config: Config | None = None) -> str | None:
-    """Same lookup as :func:`_get_api_key`, but ``None`` when no key is set."""
+    """Same lookup as :func:`_get_api_key`, but ``None`` when no key is set (empty or blank counts as unset)."""
     config = Config.resolve(config)
-    return (
-        config.get_entropy_data_api_key()
-        or config.get_datamesh_manager_api_key()
-        or config.get_datacontract_manager_api_key()
-    )
+    for api_key in (
+        config.get_entropy_data_api_key(),
+        config.get_datamesh_manager_api_key(),
+        config.get_datacontract_manager_api_key(),
+    ):
+        if api_key and api_key.strip():
+            return api_key
+    return None
 
 
 def _get_api_key(config: Config) -> str:

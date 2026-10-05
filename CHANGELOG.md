@@ -5,6 +5,9 @@ what changed (user-facing).
 
 ## [Unreleased]
 
+- `lint --local-references` resolves linked data contracts among local `*.odcs.yaml` files even when an API key is set
+- An empty or blank API key no longer counts as set: `lint` then resolves linked data contracts locally
+
 ## [0.3.0]
 
 - `lint` resolves data contracts linked via port `contractId` (Entropy Data when an API key is set, else local `*.odcs.yaml` files under the current directory) and warns on unresolved ones; `--no-resolve-references` disables it

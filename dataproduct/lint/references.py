@@ -2,8 +2,8 @@
 
 Only ``inputPorts[].contractId`` and ``outputPorts[].contractId`` are resolved.
 With an Entropy Data API key configured, each id is looked up on the platform
-(``GET {host}/api/datacontracts/{id}``); otherwise the current directory and its
-subdirectories are searched for ``*.odcs.yaml`` files with ``kind: DataContract``
+(``GET {host}/api/datacontracts/{id}``) unless ``local_only`` is set; otherwise the
+current directory and its subdirectories are searched for ``*.odcs.yaml`` files with ``kind: DataContract``
 and a matching ``id``. An unresolved contract is a ``warning``, not an ``error``:
 the contract may legitimately live somewhere this lint run cannot see.
 """
@@ -71,14 +71,17 @@ def collect_contract_references(data: Dict[str, Any]) -> List[ContractReference]
 
 
 def resolve_contract_references(
-    data: Dict[str, Any], config: Config, search_dir: Optional[Path] = None
+    data: Dict[str, Any], config: Config, search_dir: Optional[Path] = None, local_only: bool = False
 ) -> tuple[List[Check], List[ResolvedContract]]:
-    """Resolve every port ``contractId``; return one check per reference plus the resolved contracts."""
+    """Resolve every port ``contractId``; return one check per reference plus the resolved contracts.
+
+    ``local_only`` searches local files even when an Entropy Data API key is set.
+    """
     references = collect_contract_references(data)
     if not references:
         return [], []
 
-    if get_api_key_or_none(config) is not None:
+    if not local_only and get_api_key_or_none(config) is not None:
         resolver = _EntropyDataResolver(config)
     else:
         resolver = _LocalResolver(search_dir or Path.cwd())

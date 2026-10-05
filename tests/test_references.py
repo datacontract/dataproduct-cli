@@ -78,6 +78,29 @@ def test_entropy_data_lookup_failure_is_a_warning(monkeypatch):
     assert run.result == "passed"
 
 
+def test_empty_api_key_resolves_locally(monkeypatch):
+    monkeypatch.setenv("ENTROPY_DATA_API_KEY", "")
+    monkeypatch.setenv("DATACONTRACT_MANAGER_API_KEY", " ")
+    with patch("dataproduct.integration.entropy_data.requests.get") as mock_get:
+        run = DataProduct(data_product_file=str(DATA_PRODUCT), reference_search_dir=FIXTURES).lint()
+
+    mock_get.assert_not_called()
+    assert _reference_checks(run)["outputPorts/0/contractId"].result == "passed"
+
+
+def test_local_references_ignore_api_key(monkeypatch):
+    monkeypatch.setenv("ENTROPY_DATA_API_KEY", "secret-key")
+    with patch("dataproduct.integration.entropy_data.requests.get") as mock_get:
+        run = DataProduct(
+            data_product_file=str(DATA_PRODUCT), reference_search_dir=FIXTURES, local_references=True
+        ).lint()
+
+    mock_get.assert_not_called()
+    check = _reference_checks(run)["outputPorts/0/contractId"]
+    assert check.result == "passed"
+    assert check.reason.endswith("contracts/nested/orders.odcs.yaml")
+
+
 def test_resolution_can_be_disabled():
     run = DataProduct(data_product_file=str(DATA_PRODUCT), resolve_references=False).lint()
     assert _reference_checks(run) == {}
@@ -149,6 +172,20 @@ def test_cli_no_resolve_references(monkeypatch):
     assert result.exit_code == 0, result.output
     assert "resolvable" not in result.output
     run_mock.assert_not_called()
+
+
+def test_cli_local_references(monkeypatch):
+    monkeypatch.chdir(FIXTURES)
+    monkeypatch.setenv("ENTROPY_DATA_API_KEY", "secret-key")
+    with (
+        patch("dataproduct.command_lint.datacontract_cli_path", return_value=None),
+        patch("dataproduct.integration.entropy_data.requests.get") as mock_get,
+    ):
+        result = runner.invoke(app, ["lint", str(DATA_PRODUCT), "--local-references"])
+
+    assert result.exit_code == 0, result.output
+    mock_get.assert_not_called()
+    assert "Found at contracts/nested/orders.odcs.yaml" in " ".join(result.output.split())
 
 
 def test_cli_prints_port_label_and_relative_path(monkeypatch):

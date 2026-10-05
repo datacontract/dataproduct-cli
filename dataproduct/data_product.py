@@ -30,10 +30,12 @@ class DataProduct:
         config: "Optional[Union[Config, dict]]" = None,
         resolve_references: bool = True,
         reference_search_dir: Optional[Union[str, Path]] = None,
+        local_references: bool = False,
         datacontract_cli: Optional[str] = None,
     ):
         """``resolve_references`` checks that port ``contractId``s resolve (via Entropy Data when an
         API key is set, else among ``*.odcs.yaml`` files under ``reference_search_dir``, default cwd).
+        ``local_references`` searches the local files even when an API key is set.
         ``datacontract_cli`` is the path of a ``datacontract`` executable to lint resolved contracts with.
         """
         self._data_product_file = data_product_file
@@ -42,6 +44,7 @@ class DataProduct:
         self._all_errors = all_errors
         self._resolve_references = resolve_references
         self._reference_search_dir = Path(reference_search_dir) if reference_search_dir is not None else None
+        self._local_references = local_references
         self._datacontract_cli = datacontract_cli
         self._config = Config.resolve(config)
 
@@ -103,7 +106,9 @@ class DataProduct:
         return run
 
     def _lint_references(self, run: Run, data: dict) -> None:
-        checks, contracts = resolve_contract_references(data, self._config, self._reference_search_dir)
+        checks, contracts = resolve_contract_references(
+            data, self._config, self._reference_search_dir, local_only=self._local_references
+        )
         if self._datacontract_cli is not None:
             checks += lint_contracts_with_datacontract_cli(contracts, self._datacontract_cli)
         run.checks.extend(checks)

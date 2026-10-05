@@ -50,6 +50,14 @@ def lint(
             "is on the PATH, lint them with it."
         ),
     ] = True,
+    local_references: Annotated[
+        bool,
+        typer.Option(
+            "--local-references",
+            help="Resolve the linked data contracts among *.odcs.yaml files under the current directory, even when "
+            "an Entropy Data API key is set.",
+        ),
+    ] = False,
     debug: debug_option = None,
 ):
     """
@@ -65,6 +73,7 @@ def lint(
         schema_location=schema,
         all_errors=all_errors,
         resolve_references=resolve_references,
+        local_references=local_references,
         datacontract_cli=datacontract_cli_path() if resolve_references else None,
     ).lint()
     write_result(run, console, output_format, output)
