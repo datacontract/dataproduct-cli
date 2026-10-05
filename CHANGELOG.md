@@ -5,6 +5,8 @@ what changed (user-facing).
 
 ## [Unreleased]
 
+## [0.3.1]
+
 - `lint --local-references` resolves linked data contracts among local `*.odcs.yaml` files even when an API key is set
 - An empty or blank API key no longer counts as set: `lint` then resolves linked data contracts locally
 
