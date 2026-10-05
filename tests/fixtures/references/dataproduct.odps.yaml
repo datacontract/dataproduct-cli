@@ -1,0 +1,20 @@
+apiVersion: v1.1.0
+kind: DataProduct
+id: orders-product
+status: active
+name: Orders
+
+inputPorts:
+  - id: raw-orders
+    name: raw-orders
+    contractId: missing-contract
+
+outputPorts:
+  - id: orders
+    name: orders
+    contractId: orders-contract
+  - id: orders-v1
+    name: orders-v1
+    contractId: orders-contract
+  - id: no-contract
+    name: no-contract

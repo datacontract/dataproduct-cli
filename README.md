@@ -41,10 +41,16 @@ dataproduct lint --output-format junit --output TEST-dataproduct.xml
 dataproduct lint --json-schema ./odps.schema.json  # validate against a custom schema
 ```
 
-Validation is schema-only: the data product is checked against the bundled
-ODPS JSON Schema matching its `apiVersion` (`v1.1.0`, `v1.0.0`, or `v0.9.0`;
-unknown versions are validated against the latest). Exit code is `0` when
-valid, `1` otherwise.
+The data product is checked against the bundled ODPS JSON Schema matching its
+`apiVersion` (`v1.1.0`, `v1.0.0`, or `v0.9.0`; unknown versions are validated
+against the latest). Exit code is `0` when valid, `1` otherwise.
+
+`lint` also resolves the data contracts linked via `inputPorts[].contractId` /
+`outputPorts[].contractId`: through Entropy Data when an API key is set,
+otherwise by searching `*.odcs.yaml` files (`kind: DataContract`, matching `id`)
+under the current directory. If [`datacontract`](https://github.com/datacontract/datacontract-cli)
+is on your PATH, each resolved contract is linted with it too. Unresolved or
+invalid contracts are reported as warnings; `--no-resolve-references` turns this off.
 
 ### `publish` — publish to Entropy Data
 

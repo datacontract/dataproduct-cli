@@ -2,7 +2,7 @@
 
 Mirrors datacontract-cli's ``Run``/``Check`` shape closely so the two tools feel
 like siblings and share output tooling. The ``warning`` result level exists for
-parity and forward-compat; 0.1 emits only ``passed`` / ``error``.
+non-blocking findings such as unresolved linked data contracts.
 """
 
 import logging

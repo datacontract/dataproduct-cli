@@ -5,6 +5,9 @@ what changed (user-facing).
 
 ## [Unreleased]
 
+- `lint` resolves data contracts linked via port `contractId` (Entropy Data when an API key is set, else local `*.odcs.yaml` files under the current directory) and warns on unresolved ones; `--no-resolve-references` disables it
+- `lint` runs `datacontract lint` on each linked data contract when datacontract-cli is on the PATH
+
 ## [0.2.0]
 
 - Support ODPS v1.1.0: `lint` validates against the bundled v1.1.0 JSON Schema (`type`, `context`, `synonyms`, `deprecated`, `customProperties[].vendor`, element `id`s, optional port `version`/`contractId`)

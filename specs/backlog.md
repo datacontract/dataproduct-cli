@@ -44,6 +44,7 @@ CLIs (datacontract-cli's `publish` is also un-gated today).
 ### 5. `authoritativeDefinitions` reference resolution (this CLI)
 Optionally resolve/inline external references during `lint` (as datacontract-cli
 does behind `--inline-references`). Deferred until a concrete need.
+(Port `contractId` resolution shipped separately — see 002-lint.md check 4.)
 - Source: [002-lint.md](002-lint.md)
 
 ### 6. Publish-time `team` existence pre-check (this CLI)

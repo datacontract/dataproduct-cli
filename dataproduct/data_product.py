@@ -6,11 +6,14 @@ run = DataProduct(data_product_file="dataproduct.odps.yaml").lint()
 DataProduct(data_product_file="dataproduct.odps.yaml").publish()
 """
 
+from pathlib import Path
 from typing import Optional, Union
 
 from dataproduct.config import Config
 from dataproduct.integration.entropy_data import publish_data_product_to_entropy_data
+from dataproduct.lint.contract_lint import lint_contracts_with_datacontract_cli
 from dataproduct.lint.files import read_resource
+from dataproduct.lint.references import resolve_contract_references
 from dataproduct.lint.schema import fetch_schema, schema_version_for
 from dataproduct.lint.validate import parse_yaml, validate_against_schema
 from dataproduct.model.exceptions import DataProductException
@@ -25,11 +28,21 @@ class DataProduct:
         schema_location: Optional[str] = None,
         all_errors: bool = False,
         config: "Optional[Union[Config, dict]]" = None,
+        resolve_references: bool = True,
+        reference_search_dir: Optional[Union[str, Path]] = None,
+        datacontract_cli: Optional[str] = None,
     ):
+        """``resolve_references`` checks that port ``contractId``s resolve (via Entropy Data when an
+        API key is set, else among ``*.odcs.yaml`` files under ``reference_search_dir``, default cwd).
+        ``datacontract_cli`` is the path of a ``datacontract`` executable to lint resolved contracts with.
+        """
         self._data_product_file = data_product_file
         self._data_product_str = data_product_str
         self._schema_location = schema_location
         self._all_errors = all_errors
+        self._resolve_references = resolve_references
+        self._reference_search_dir = Path(reference_search_dir) if reference_search_dir is not None else None
+        self._datacontract_cli = datacontract_cli
         self._config = Config.resolve(config)
 
     def _load_dict(self) -> dict:
@@ -46,7 +59,8 @@ class DataProduct:
         return parse_yaml(content)
 
     def lint(self) -> Run:
-        """Validate the data product against the ODPS JSON Schema matching its ``apiVersion`` (schema-only)."""
+        """Validate the data product against the ODPS JSON Schema matching its ``apiVersion``,
+        then resolve (and optionally lint) the data contracts its ports link."""
         run = Run.create_run()
         run.log_info("Linting data product")
         try:
@@ -70,6 +84,8 @@ class DataProduct:
                         else f"Data product is valid against ODPS v{schema_version}",
                     )
                 )
+            if self._resolve_references:
+                self._lint_references(run, data)
         except DataProductException as e:
             run.checks.append(Check(type=e.type, result=e.result, name=e.name, reason=e.reason, engine=e.engine))
             run.log_error(str(e))
@@ -85,6 +101,15 @@ class DataProduct:
             run.log_error(str(e))
         run.finish()
         return run
+
+    def _lint_references(self, run: Run, data: dict) -> None:
+        checks, contracts = resolve_contract_references(data, self._config, self._reference_search_dir)
+        if self._datacontract_cli is not None:
+            checks += lint_contracts_with_datacontract_cli(contracts, self._datacontract_cli)
+        run.checks.extend(checks)
+        for check in checks:
+            if check.result == ResultEnum.warning:
+                run.log_warn(f"{check.name}: {check.reason}")
 
     def publish(self, ssl_verification: bool = True) -> None:
         """Publish the data product to Entropy Data (no client-side lint in 0.1)."""

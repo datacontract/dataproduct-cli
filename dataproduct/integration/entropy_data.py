@@ -7,7 +7,7 @@ Structurally identical to datacontract-cli's data-contract publish, with the
 path changed from ``datacontracts`` to ``dataproducts``.
 """
 
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import requests
 
@@ -22,7 +22,7 @@ def publish_data_product_to_entropy_data(
 ) -> None:
     config = Config.resolve(config)
     api_key = _get_api_key(config)
-    host = _get_host(config)
+    host = get_host(config)
     headers = {"Content-Type": "application/json", "x-api-key": api_key}
 
     id = data_product_dict.get("id")
@@ -51,6 +51,47 @@ class DataProductPublishError(Exception):
     """Raised when a publish attempt fails (missing key, bad id, non-200)."""
 
 
+class DataContractLookupError(Exception):
+    """Raised when Entropy Data cannot answer whether a data contract exists."""
+
+
+def data_contract_url(contract_id: str, config: Config | None = None) -> str:
+    return f"{get_host(Config.resolve(config))}/api/datacontracts/{quote(contract_id, safe='')}"
+
+
+def fetch_data_contract_exists(contract_id: str, config: Config | None = None) -> bool:
+    """``GET {host}/api/datacontracts/{id}``: ``True`` on 200, ``False`` on 404.
+
+    Any other outcome raises :class:`DataContractLookupError`. Redirects are not
+    followed, so the API key never travels to another host.
+    """
+    config = Config.resolve(config)
+    url = data_contract_url(contract_id, config)
+    headers = {"Accept": "application/json", "x-api-key": _get_api_key(config)}
+    display_host = _extract_hostname(get_host(config))
+    try:
+        response = requests.get(url, headers=headers, timeout=10, allow_redirects=False)
+    except requests.RequestException as e:
+        raise DataContractLookupError(f"Could not reach {display_host} to look up data contract '{contract_id}': {e}")
+    if response.status_code == 200:
+        return True
+    if response.status_code == 404:
+        return False
+    raise DataContractLookupError(
+        f"Could not look up data contract '{contract_id}' on {display_host}: HTTP {response.status_code}"
+    )
+
+
+def get_api_key_or_none(config: Config | None = None) -> str | None:
+    """Same lookup as :func:`_get_api_key`, but ``None`` when no key is set."""
+    config = Config.resolve(config)
+    return (
+        config.get_entropy_data_api_key()
+        or config.get_datamesh_manager_api_key()
+        or config.get_datacontract_manager_api_key()
+    )
+
+
 def _get_api_key(config: Config) -> str:
     """API key with fallback priority:
 
@@ -58,11 +99,7 @@ def _get_api_key(config: Config) -> str:
     2. ``DATAMESH_MANAGER_API_KEY``
     3. ``DATACONTRACT_MANAGER_API_KEY``
     """
-    api_key = (
-        config.get_entropy_data_api_key()
-        or config.get_datamesh_manager_api_key()
-        or config.get_datacontract_manager_api_key()
-    )
+    api_key = get_api_key_or_none(config)
     if api_key is None:
         raise DataProductPublishError(
             "Cannot publish, as neither ENTROPY_DATA_API_KEY, DATAMESH_MANAGER_API_KEY, "
@@ -71,7 +108,7 @@ def _get_api_key(config: Config) -> str:
     return api_key
 
 
-def _get_host(config: Config) -> str:
+def get_host(config: Config) -> str:
     """Host with fallback priority: ENTROPY_DATA_HOST, DATAMESH_MANAGER_HOST,
     DATACONTRACT_MANAGER_HOST, then the default ``https://api.entropy-data.com``."""
     return (

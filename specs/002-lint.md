@@ -19,6 +19,7 @@ dataproduct lint [LOCATION] [OPTIONS]
 | `--output` | option (path) | none | Write test results to this file (e.g. `TEST-dataproduct.xml`); default is stdout. |
 | `--output-format` | option (enum) | none | `json` or `junit`. |
 | `--all-errors` | flag | `false` | Report all JSON Schema violations instead of stopping at the first. |
+| `--resolve-references / --no-resolve-references` | flag | `true` | Resolve (and, with datacontract-cli on the PATH, lint) the data contracts linked via port `contractId`. |
 | `--debug` | flag | `false` | Enable debug logging. |
 
 Example: `dataproduct lint dataproduct.odps.yaml`
@@ -49,7 +50,29 @@ Run as an ordered set of checks, each producing a result entry:
      ones (`type`, `context`, `synonyms`, `deprecated`, `vendor`), so a v1.0.0
      document must not silently pass with v1.1.0 fields or without `status`.
 
-**0.1 is schema-only** — parity with datacontract-cli's `lint`, which validates
+4. **Linked data contracts resolve** (since 0.3) — for every
+   `inputPorts[].contractId` and `outputPorts[].contractId` (nothing else is
+   followed), one check per reference:
+   - **API key set** (`ENTROPY_DATA_API_KEY` or its fallbacks): `GET
+     {host}/api/datacontracts/{id}` with `x-api-key`, redirects not followed.
+     `200` → `passed`; `404` → `warning` (not found on host); anything else
+     (network, `401/403`, `5xx`) → `warning` (could not verify). No local
+     fallback.
+   - **No API key**: search the current working directory and its
+     subdirectories (skipping hidden dirs, `node_modules`, `venv`, …) for
+     `*.odcs.yaml` / `*.odcs.yml`, parse each, and match `kind: DataContract`
+     + `id`. Found → `passed` (reason names the path); else `warning`.
+   - Unresolved references are **warnings**, never errors: the contract may
+     live somewhere this run can't see, and `lint` stays a non-breaking gate
+     for existing users.
+5. **Linked data contracts lint** — only from the `dataproduct lint` command
+   (never the library API by default), and only when a `datacontract`
+   executable is on the PATH: each *resolved* contract (deduplicated) is run
+   through `datacontract lint <path-or-api-url>` (the env, including the API
+   key, is inherited). Exit `0` → `passed`; otherwise `warning` carrying
+   datacontract-cli's output.
+
+**Schema validation itself is schema-only** — parity with datacontract-cli's `lint`, which validates
 against the JSON Schema and nothing more. Best-practice warnings (≥1 outputPort,
 `id` is a UUID, recommended `status` values, `v0.9.0` deprecation) are
 **backlogged** for a coordinated pass across both CLIs — see
@@ -59,8 +82,7 @@ against the JSON Schema and nothing more. Best-practice warnings (≥1 outputPor
 
 - Produce a `Run` result object (parallel to datacontract-cli's `Run`) with a
   list of checks, each `{result: passed|warning|error, name, message, ...}`.
-  The `warning` level exists in the model for parity/forward-compat, but 0.1
-  emits only `passed` / `error`.
+  `warning` is used by the linked-contract checks (4, 5).
 - Overall result: `passed` if no `error` checks (warnings allowed), else
   `failed`.
 - **Exit code:** `0` when overall `passed`, `1` when `failed`.
@@ -108,6 +130,12 @@ assert run.result == "passed"
 - [ ] A `v1.1.0` document without `status` returns `passed`; a `v1.0.0` one fails.
 - [ ] A `v1.0.0` document using a v1.1.0-only field (e.g. `type`) fails.
 
+- [ ] A port `contractId` matching a local `*.odcs.yaml` with `kind: DataContract`
+      passes; one with no match warns; the run still `passes`.
+- [ ] With an API key, contracts resolve via Entropy Data only.
+- [ ] `dataproduct lint` runs `datacontract lint` once per resolved contract
+      when it is on the PATH; the library API doesn't.
+
 ## Test cases (pytest)
 
 1. `test_lint_valid` — `tests/fixtures/lint/valid-dataproduct.odps.yaml` → passed.
@@ -122,6 +150,8 @@ assert run.result == "passed"
 10. `test_lint_valid_v1_1_0`, `test_lint_v1_1_0_status_is_optional`,
     `test_lint_v1_1_0_fields_rejected_under_v1_0_0`,
     `test_lint_names_the_schema_that_ran`, `test_schema_version_selected_by_api_version`.
+11. `tests/test_references.py` — local / Entropy Data resolution, warnings,
+    datacontract-cli invocation, `--no-resolve-references`.
 
 ## Decisions
 
@@ -129,6 +159,7 @@ assert run.result == "passed"
    datacontract-cli. Best-practice warnings backlogged ([backlog.md](backlog.md)).
 2. **Reference resolution:** ✅ **Deferred** — no inlining of
    `authoritativeDefinitions` in 0.1 ([backlog.md](backlog.md)).
+   Port `contractId`s are resolved since 0.3 (check 4), as warnings.
 3. **`apiVersion v0.9.0`:** ✅ **Accept silently** (validated with the v1.0.0
    schema, which has no dedicated v0.9.0 rules). A deprecation warning is backlogged.
 4. **ODPS v1.1.0 (2026-09):** ✅ **Schema chosen per `apiVersion`**, mirroring

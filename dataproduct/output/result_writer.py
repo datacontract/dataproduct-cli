@@ -9,6 +9,7 @@ from typing import Optional
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 import typer
+from rich.markup import escape
 
 from dataproduct.model.run import ResultEnum, Run
 from dataproduct.output.output_format import OutputFormat
@@ -36,9 +37,9 @@ def write_result(run: Run, console, output_format: Optional[OutputFormat], outpu
 def _print_console(run: Run, console) -> None:
     for check in run.checks:
         icon = _ICON.get(check.result, "•")
-        line = f"{icon} {check.name}"
+        line = f"{icon} {escape(check.name)}"
         if check.reason:
-            line += f": {check.reason}"
+            line += f": {escape(check.reason)}"
         console.print(line)
     if run.has_passed():
         console.print("[green]🟢 Data product is valid.[/green]")

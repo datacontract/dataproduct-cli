@@ -1,0 +1,5 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: orders-contract
+version: 1.0.0
+status: active
