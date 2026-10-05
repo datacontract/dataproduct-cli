@@ -5,6 +5,8 @@ what changed (user-facing).
 
 ## [Unreleased]
 
+## [0.3.0]
+
 - `lint` resolves data contracts linked via port `contractId` (Entropy Data when an API key is set, else local `*.odcs.yaml` files under the current directory) and warns on unresolved ones; `--no-resolve-references` disables it
 - `lint` runs `datacontract lint` on each linked data contract when datacontract-cli is on the PATH
 

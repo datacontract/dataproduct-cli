@@ -1,6 +1,6 @@
 [project]
 name = "dataproduct-cli"
-version = "0.2.0"
+version = "0.3.0"
 description = "The dataproduct CLI is an open source command-line tool for working with data products. It uses data product YAML files following the Open Data Product Standard (ODPS) to lint the definition against the standard and publish it to Entropy Data. The tool is written in Python. It can be used as a standalone CLI tool, in a CI/CD pipeline, or directly as a Python library."
 license = "MIT"
 readme = "README.md"
