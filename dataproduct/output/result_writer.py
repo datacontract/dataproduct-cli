@@ -49,7 +49,7 @@ def _print_console(run: Run, console) -> None:
 
 def _write_or_print(content: str, output: Optional[Path], console) -> None:
     if output is not None:
-        Path(output).write_text(content)
+        Path(output).write_text(content, encoding="utf-8")
         console.print(f"📝 results written to {output}")
     else:
         print(content)

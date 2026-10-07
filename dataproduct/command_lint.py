@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 from dataproduct.cli import app, console, debug_option, enable_debug_logging, resolve_output_format
 from dataproduct.config import cli_config
 from dataproduct.data_product import DataProduct
-from dataproduct.lint.contract_lint import datacontract_cli_path
+from dataproduct.lint.contract_lint import DATACONTRACT_EXECUTABLE, datacontract_cli_path
 from dataproduct.output.output_format import OutputFormat
 from dataproduct.output.result_writer import write_result
 
@@ -46,8 +46,8 @@ def lint(
         bool,
         typer.Option(
             help="Resolve the data contracts linked via input/output port contractId (via Entropy Data when an "
-            "API key is set, else among *.odcs.yaml files under the current directory) and, if datacontract-cli "
-            "is on the PATH, lint them with it."
+            "API key is set, else among *.odcs.yaml files under the current directory) and lint them with "
+            "datacontract-cli (a warning if it is not on the PATH)."
         ),
     ] = True,
     local_references: Annotated[
@@ -74,6 +74,6 @@ def lint(
         all_errors=all_errors,
         resolve_references=resolve_references,
         local_references=local_references,
-        datacontract_cli=datacontract_cli_path() if resolve_references else None,
+        datacontract_cli=(datacontract_cli_path() or DATACONTRACT_EXECUTABLE) if resolve_references else None,
     ).lint()
     write_result(run, console, output_format, output)

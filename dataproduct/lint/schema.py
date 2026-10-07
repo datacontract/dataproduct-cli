@@ -43,7 +43,7 @@ def fetch_schema(location: Union[str, Path] = None, schema_version: Optional[str
         logging.info("Use default bundled schema " + schema_name)
         schemas = resources.files("dataproduct")
         schema_file = schemas.joinpath("schemas", schema_name)
-        with schema_file.open("r") as file:
+        with schema_file.open("r", encoding="utf-8") as file:
             return json.load(file)
 
     location_str = str(location)
@@ -60,5 +60,5 @@ def fetch_schema(location: Union[str, Path] = None, schema_version: Optional[str
             result=ResultEnum.error,
         )
     logging.debug(f"Loading JSON schema locally at {location_str}")
-    with open(location_str, "r") as file:
+    with open(location_str, "r", encoding="utf-8") as file:
         return json.load(file)

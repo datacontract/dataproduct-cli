@@ -50,8 +50,9 @@ against the latest). Exit code is `0` when valid, `1` otherwise.
 otherwise by searching `*.odcs.yaml` files (`kind: DataContract`, matching `id`)
 under the current directory. `--local-references` searches the local files even
 when an API key is set. If [`datacontract`](https://github.com/datacontract/datacontract-cli)
-is on your PATH, each resolved contract is linted with it too. Unresolved or
-invalid contracts are reported as warnings; `--no-resolve-references` turns this off.
+is on your PATH, each resolved contract is linted with it too; if it is missing or
+cannot be run, `lint` says so in a warning. Unresolved or invalid contracts are
+reported as warnings; `--no-resolve-references` turns this off.
 
 ### `publish` — publish to Entropy Data
 

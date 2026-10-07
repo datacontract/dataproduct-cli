@@ -68,11 +68,18 @@ Run as an ordered set of checks, each producing a result entry:
      live somewhere this run can't see, and `lint` stays a non-breaking gate
      for existing users.
 5. **Linked data contracts lint** — only from the `dataproduct lint` command
-   (never the library API by default), and only when a `datacontract`
-   executable is on the PATH: each *resolved* contract (deduplicated) is run
+   (never the library API by default). Without a `datacontract` executable on
+   the PATH, a single `warning` "datacontract-cli is runnable" says so (only
+   when at least one contract resolved). Otherwise each *resolved* contract (deduplicated) is run
    through `datacontract lint <path-or-api-url>` (the env, including the API
    key, is inherited). Exit `0` → `passed`; otherwise `warning` carrying
-   datacontract-cli's output.
+   datacontract-cli's output (ANSI codes stripped, truncated). First,
+   `datacontract --version` must succeed; if it can't be started, times out,
+   or exits non-zero (e.g. a broken launcher on Windows), a single `warning`
+   "datacontract-cli is runnable" replaces the per-contract lints. The child
+   runs with UTF-8 I/O (`PYTHONIOENCODING`, `PYTHONUTF8`) and `NO_COLOR`;
+   timeouts or any error starting it are `warning`s, never crashes.
+   All files are read and written as UTF-8, independent of the OS locale.
 
 **Schema validation itself is schema-only** — parity with datacontract-cli's `lint`, which validates
 against the JSON Schema and nothing more. Best-practice warnings (≥1 outputPort,
@@ -138,7 +145,7 @@ assert run.result == "passed"
 - [ ] An empty or blank API key resolves locally.
 - [ ] `--local-references` resolves locally even with an API key.
 - [ ] `dataproduct lint` runs `datacontract lint` once per resolved contract
-      when it is on the PATH; the library API doesn't.
+      when it is on the PATH, and warns once when it isn't; the library API doesn't.
 
 ## Test cases (pytest)
 

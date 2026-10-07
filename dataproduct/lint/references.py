@@ -180,7 +180,7 @@ def _find_contract_files(root: Path) -> Iterator[Path]:
 def _data_contract_id(path: Path) -> Optional[str]:
     """The ``id`` of the ODCS document at ``path``, or ``None`` if it isn't a parseable data contract."""
     try:
-        data = yaml.safe_load(path.read_text())
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as e:
         logging.debug(f"Skipping {path}: {e}")
         return None

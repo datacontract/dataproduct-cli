@@ -5,6 +5,13 @@ what changed (user-facing).
 
 ## [Unreleased]
 
+## [0.3.2]
+
+- `lint` warns when datacontract-cli is not on the PATH and linked data contracts therefore are not linted
+- `lint` checks that datacontract-cli actually runs (`datacontract --version`) before linting linked contracts, and reports one clear warning if it doesn't
+- `lint` runs datacontract-cli with UTF-8 output and reports timeouts and startup errors as warnings instead of crashing (Windows)
+- Data product, data contract, and schema files are read as UTF-8 regardless of the OS locale (Windows)
+
 ## [0.3.1]
 
 - `lint --local-references` resolves linked data contracts among local `*.odcs.yaml` files even when an API key is set

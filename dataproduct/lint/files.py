@@ -35,4 +35,4 @@ def read_resource(location: str, config: Config | None = None) -> str:
             reason=f"The file '{location_str}' does not exist.",
             result=ResultEnum.error,
         )
-    return Path(location_str).read_text()
+    return Path(location_str).read_text(encoding="utf-8")

@@ -113,16 +113,19 @@ def test_lints_each_resolved_contract_once_with_datacontract_cli():
             data_product_file=str(DATA_PRODUCT), reference_search_dir=FIXTURES, datacontract_cli="/bin/datacontract"
         ).lint()
 
-    run_mock.assert_called_once()
-    assert run_mock.call_args.args[0][:2] == ["/bin/datacontract", "lint"]
+    assert [c.args[0][:2] for c in run_mock.call_args_list] == [
+        ["/bin/datacontract", "--version"],
+        ["/bin/datacontract", "lint"],
+    ]
     assert Path(run_mock.call_args.args[0][2]).resolve() == LOCAL_CONTRACT.resolve()
     lint_checks = [c for c in run.checks if "passes datacontract lint" in c.name]
     assert [c.result for c in lint_checks] == ["passed"]
 
 
 def test_failing_contract_lint_is_a_warning():
+    version = subprocess.CompletedProcess(args=[], returncode=0, stdout="0.11.0", stderr="")
     completed = subprocess.CompletedProcess(args=[], returncode=1, stdout="status is invalid", stderr="")
-    with patch("dataproduct.lint.contract_lint.subprocess.run", return_value=completed):
+    with patch("dataproduct.lint.contract_lint.subprocess.run", side_effect=[version, completed]):
         run = DataProduct(
             data_product_file=str(DATA_PRODUCT), reference_search_dir=FIXTURES, datacontract_cli="/bin/datacontract"
         ).lint()
@@ -131,6 +134,66 @@ def test_failing_contract_lint_is_a_warning():
     assert check.result == "warning"
     assert "status is invalid" in check.reason
     assert run.result == "passed"
+
+
+def _lint_with(side_effect):
+    with patch("dataproduct.lint.contract_lint.subprocess.run", side_effect=side_effect) as run_mock:
+        run = DataProduct(
+            data_product_file=str(DATA_PRODUCT), reference_search_dir=FIXTURES, datacontract_cli="/bin/datacontract"
+        ).lint()
+    return run, run_mock
+
+
+def test_unrunnable_datacontract_cli_is_one_warning_and_skips_lint():
+    run, run_mock = _lint_with(FileNotFoundError(2, "No such file or directory"))
+
+    run_mock.assert_called_once()
+    checks = [c for c in run.checks if "datacontract" in c.name]
+    assert [(c.name, c.result) for c in checks] == [("datacontract-cli is runnable", "warning")]
+    assert "Could not run '/bin/datacontract'" in checks[0].reason
+    assert run.result == "passed"
+
+
+def test_failing_datacontract_version_is_one_warning_and_skips_lint():
+    broken = subprocess.CompletedProcess(args=[], returncode=101, stdout="", stderr="Fatal error in launcher")
+    run, run_mock = _lint_with([broken])
+
+    run_mock.assert_called_once()
+    check = next(c for c in run.checks if c.name == "datacontract-cli is runnable")
+    assert check.result == "warning"
+    assert "exited with 101" in check.reason
+    assert "Fatal error in launcher" in check.reason
+
+
+def test_datacontract_lint_timeout_is_a_warning():
+    version = subprocess.CompletedProcess(args=[], returncode=0, stdout="0.11.0", stderr="")
+    run, _ = _lint_with([version, subprocess.TimeoutExpired(cmd="datacontract", timeout=120)])
+
+    check = next(c for c in run.checks if "passes datacontract lint" in c.name)
+    assert check.result == "warning"
+    assert "did not finish within 120s" in check.reason
+
+
+def test_unexpected_error_running_datacontract_lint_is_a_warning():
+    version = subprocess.CompletedProcess(args=[], returncode=0, stdout="0.11.0", stderr="")
+    run, _ = _lint_with([version, UnicodeDecodeError("cp1252", b"\x81", 0, 1, "undefined")])
+
+    check = next(c for c in run.checks if "passes datacontract lint" in c.name)
+    assert check.result == "warning"
+    assert run.result == "passed"
+
+
+def test_datacontract_lint_runs_with_utf8_and_strips_ansi():
+    version = subprocess.CompletedProcess(args=[], returncode=0, stdout="0.11.0", stderr="")
+    failed = subprocess.CompletedProcess(args=[], returncode=1, stdout="\x1b[31m❌ status is invalid\x1b[0m", stderr="")
+    run, run_mock = _lint_with([version, failed])
+
+    kwargs = run_mock.call_args.kwargs
+    assert kwargs["encoding"] == "utf-8"
+    assert kwargs["env"]["PYTHONIOENCODING"] == "utf-8"
+    assert kwargs["stdin"] == subprocess.DEVNULL
+    check = next(c for c in run.checks if "passes datacontract lint" in c.name)
+    assert check.reason.endswith("❌ status is invalid")
 
 
 def test_library_does_not_run_datacontract_cli_by_default():
@@ -149,20 +212,23 @@ def test_cli_lints_contracts_when_datacontract_cli_on_path(monkeypatch):
         result = runner.invoke(app, ["lint", str(DATA_PRODUCT)])
 
     assert result.exit_code == 0, result.output
-    run_mock.assert_called_once()
+    assert run_mock.call_count == 2  # --version, then lint
     assert "passes datacontract lint" in result.output
 
 
-def test_cli_skips_contract_lint_without_datacontract_cli(monkeypatch):
+def test_cli_warns_and_skips_contract_lint_without_datacontract_cli(monkeypatch):
     monkeypatch.chdir(FIXTURES)
     with (
-        patch("dataproduct.command_lint.datacontract_cli_path", return_value=None),
+        patch("dataproduct.lint.contract_lint.shutil.which", return_value=None),
         patch("dataproduct.lint.contract_lint.subprocess.run") as run_mock,
     ):
         result = runner.invoke(app, ["lint", str(DATA_PRODUCT)])
 
     assert result.exit_code == 0, result.output
     run_mock.assert_not_called()
+    output = " ".join(result.output.split())
+    assert "datacontract-cli is runnable" in output
+    assert "'datacontract' was not found on the PATH" in output
 
 
 def test_cli_no_resolve_references(monkeypatch):
@@ -178,7 +244,7 @@ def test_cli_local_references(monkeypatch):
     monkeypatch.chdir(FIXTURES)
     monkeypatch.setenv("ENTROPY_DATA_API_KEY", "secret-key")
     with (
-        patch("dataproduct.command_lint.datacontract_cli_path", return_value=None),
+        patch("dataproduct.lint.contract_lint.shutil.which", return_value=None),
         patch("dataproduct.integration.entropy_data.requests.get") as mock_get,
     ):
         result = runner.invoke(app, ["lint", str(DATA_PRODUCT), "--local-references"])
@@ -190,7 +256,7 @@ def test_cli_local_references(monkeypatch):
 
 def test_cli_prints_port_label_and_relative_path(monkeypatch):
     monkeypatch.chdir(FIXTURES)
-    with patch("dataproduct.command_lint.datacontract_cli_path", return_value=None):
+    with patch("dataproduct.lint.contract_lint.shutil.which", return_value=None):
         result = runner.invoke(app, ["lint", str(DATA_PRODUCT)])
     output = " ".join(result.output.split())
     assert "linked by inputPorts[raw-orders]" in output
